@@ -6,6 +6,27 @@ configure = {
 data_path = './norm_test_data.txt'
 field_num = 10
 feature_num = 10
+def prepare_data(file_path = './norm_test_data.txt'):
+    '''
+
+    :param file_path:
+    :return: a tuple (data_set,feature2field)
+    data_set is a list,each element is a list,the last is label
+    '''
+    feature2field = {}
+    data_set = []
+    for sample in open(file_path,'r'):
+        sample_data = []
+        field_features = sample.split()[1:]
+        for field_feature_pair in field_features:
+            feature = int(field_feature_pair.split(':')[1])
+            field = int(field_feature_pair.split(':')[0])
+            value = float(field_feature_pair.split(':')[0])
+            feature2field[feature] = field
+            sample_data.append('{}:{}'.format(feature,value))
+        sample_data.append(int(sample[0]))
+        data_set.append(sample_data)
+    return data_set,feature2field
 class FFM:
     def __init__(self, batch_size ,learning_rate,data_path,field_num,feature_num,feature2field):
         self.batch_size = batch_size
@@ -68,9 +89,8 @@ class FFM:
         :param label:[batch_size] each element is 0 or 1
         :return: log_loss
         '''
-    def get_data(self):
+    def get_data(self,data_set):
         """
-        
-        :return:
+        :return: a tuple of feature and x
         """
 if __name__ == "__main__":
