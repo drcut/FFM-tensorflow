@@ -8,7 +8,7 @@ configure
 batch_size = 64
 learning_rate = 0.001
 data_path = './norm_test_data.txt'
-# no need to define,will be assigned by prepare_data
+# no need to define,will be assigned by prepare_data function
 field_num = 0
 feature_num = 0
 
@@ -59,6 +59,7 @@ class FFM:
                                                 shape=[feature_num],
                                                 dtype=tf.float32,
                                                 initializer=tf.truncated_normal_initializer(stddev=0.01))
+            tf.summary.histogram('liner_weight', self.liner_weight)
             self.field_embedding = []
             for idx in xrange(0, self.feature_num):
                 # a list or tensor which stores each feature's vector to each identity field,
@@ -68,6 +69,7 @@ class FFM:
                                                             shape=[field_num],
                                                             dtype=tf.float32,
                                                             initializer=tf.truncated_normal_initializer(stddev=0.01)))
+                tf.summary.histogram('field_vector{}'.format(idx), self.field_embedding[idx])
         with tf.name_scope('input'):
             self.label = tf.placeholder(tf.float32, shape=(self.batch_size))
             self.feature_value = []
@@ -80,8 +82,8 @@ class FFM:
 
             # b0:constant bias
             # predict = b0 + sum(Vi * feature_i) + sum(Vij * Vji * feature_i * feature_j)
-
             self.b0 = tf.get_variable(name='bias_0', shape=[1], dtype=tf.float32)
+            tf.summary.histogram('b0', self.b0)
             # calculate liner term
             self.liner_term = tf.reduce_sum(tf.multiply(tf.transpose(
                 tf.convert_to_tensor(self.feature_value),
@@ -96,16 +98,26 @@ class FFM:
                     self.qua_term += W1 * W2 * self.feature_value[f1] * self.feature_value[f2]
             self.predict = self.b0 + self.liner_term + self.qua_term
             self.losses = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.label, logits=self.predict))
+            tf.summary.scalar('losses', self.losses)
             self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr, name='Adam')
             self.grad = self.optimizer.compute_gradients(self.losses)
             self.opt = self.optimizer.apply_gradients(self.grad)
+
         self.sess = tf.InteractiveSession()
+
+        with tf.name_scope('plit'):
+            self.merged = tf.summary.merge_all()
+            self.writer = tf.summary.FileWriter('./train_plot', self.sess.graph)
+
         self.sess.run(tf.global_variables_initializer())
+        self.loop_step = 0
+
 
     def step(self):
         '''
         :return: log_loss
         '''
+        self.loop_step += 1
         feature, label = self.get_data()
         # feed value to placeholder
         feed_dict = {}
@@ -113,7 +125,9 @@ class FFM:
         arr_feature = np.transpose(np.array(feature))
         for idx in xrange(0, self.feature_num):
             feed_dict[self.feature_value[idx]] = arr_feature[idx]
-        _, loss_value = self.sess.run([self.opt, self.losses], feed_dict=feed_dict)
+        _,summary, loss_value = self.sess.run([self.opt,self.merged, self.losses], feed_dict=feed_dict)
+        #self.train_writer.add_summary(summary, self.step)
+        self.writer.add_summary(summary, self.loop_step)
         return loss_value
 
     def get_data(self):

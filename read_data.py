@@ -17,6 +17,7 @@ def get_field_feature(file_name = './test_data.txt'):
     for sample in meta_data:
         attribute = sample.split()
         for value in attribute[1:]:
+            print(value)
             attrs = value.split(':')
             field_set.add(attrs[0])
             feature_set.add(attrs[1])
@@ -46,7 +47,7 @@ def normalize_data_file(field_dic,feature_dic,meta_file_name = './test_data.txt'
     file.close()
 
 if __name__ == "__main__":
-    print("get field&feature id")
+    print("get field&&feature id")
     field_set,feature_set = get_field_feature()
     field_dic = {}
     for idx,item in enumerate(list(field_set)):
