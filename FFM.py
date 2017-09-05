@@ -5,9 +5,10 @@ import numpy as np
 '''
 configure
 '''
-batch_size = 64
+batch_size = 128
 learning_rate = 0.001
-data_path = './norm_test_data.txt'
+data_path = './dep_norm_test_data.txt'
+
 # no need to define,will be assigned by prepare_data function
 field_num = 0
 feature_num = 0
@@ -86,8 +87,7 @@ class FFM:
             tf.summary.histogram('b0', self.b0)
             # calculate liner term
             self.liner_term = tf.reduce_sum(tf.multiply(tf.transpose(
-                tf.convert_to_tensor(self.feature_value),
-                perm=[1, 0])
+                tf.convert_to_tensor(self.feature_value),perm=[1, 0])
                 , self.liner_weight))
             # calculate quadratic term
             self.qua_term = tf.get_variable(name='quad_term', shape=[1], dtype=tf.float32)
@@ -105,7 +105,7 @@ class FFM:
 
         self.sess = tf.InteractiveSession()
 
-        with tf.name_scope('plit'):
+        with tf.name_scope('plot'):
             self.merged = tf.summary.merge_all()
             self.writer = tf.summary.FileWriter('./train_plot', self.sess.graph)
 
